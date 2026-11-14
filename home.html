@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELLIPSING • Timezone Wheel</title>
+  <!-- Google Fonts: Fredoka & Nunito for playful cartoon rounded typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'cursive', 'sans-serif'],
+            body: ['Nunito', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Theme Variables: Soft Pastel Daylight & Cozy Midnight Starlight */
+    :root[data-theme="light"] {
+      --bg-page: #FFF7F0;
+      --bg-pattern: #FDE8DA;
+      --card-bg: #FFFFFF;
+      --card-sub: #FFF9F5;
+      --ink: #3D314A;
+      --ink-muted: #7B6D8D;
+      --border-color: #3D314A;
+      --shadow-color: #3D314A;
+      --accent-pink: #FFB5C2;
+      --accent-mint: #B8F2E6;
+      --accent-lavender: #D8C7FF;
+      --accent-butter: #FFF0A5;
+      --accent-sky: #BFE6FF;
+      --wheel-well: #F7F2FA;
+      --wheel-tick: #A899B8;
+      --sleep-overlay: rgba(61, 49, 74, 0.34);
+    }
+    
+    :root[data-theme="dark"] {
+      --bg-page: #1F1B2E;
+      --bg-pattern: #29233D;
+      --card-bg: #2A243D;
+      --card-sub: #332C4A;
+      --ink: #FDF8FF;
+      --ink-muted: #C2B6D9;
+      --border-color: #130F1F;
+      --shadow-color: #130F1F;
+      --accent-pink: #FF9EB5;
+      --accent-mint: #9BF0DF;
+      --accent-lavender: #C9B3FF;
+      --accent-butter: #FFE98A;
+      --accent-sky: #9ED8FF;
+      --wheel-well: #201B30;
+      --wheel-tick: #7E7199;
+      --sleep-overlay: rgba(15, 11, 28, 0.56);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--bg-page);
+      color: var(--ink);
+      background-image:
+        radial-gradient(var(--bg-pattern) 2.5px, transparent 2.5px),
+        radial-gradient(var(--bg-pattern) 2.5px, var(--bg-page) 2.5px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+      transition: background-color 0.35s ease, color 0.35s ease;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Cartoon Thick Borders & Tactile Offset Shadows */
+    .toon-card {
+      background-color: var(--card-bg);
+      border: 3.5px solid var(--border-color);
+      box-shadow: 0 8px 0 var(--shadow-color);
+      border-radius: 32px;
+      transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.2s ease;
+    }
+    
+    .toon-subcard {
+      background-color: var(--card-sub);
+      border: 3px solid var(--border-color);
+      box-shadow: 0 4px 0 var(--shadow-color);
+      border-radius: 22px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.35s ease;
+    }
+
+    .toon-btn {
+      border: 3px solid var(--border-color);
+      box-shadow: 0 4px 0 var(--shadow-color);
+      border-radius: 9999px;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toon-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 var(--shadow-color);
+    }
+
+    .toon-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--shadow-color);
+    }
+
+    .toon-input {
+      background-color: var(--card-sub);
+      color: var(--ink);
+      border: 3px solid var(--border-color);
+      border-radius: 16px;
+      padding: 0.55rem 0.85rem;
+      font-weight: 700;
+      outline: none;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .toon-input:focus {
+      box-shadow: 0 0 0 3px var(--accent-lavender);
+    }
+
+    /* Floating Sparkle Stars for Dark Theme */
+    .star-twinkle {
+      animation: twinkle 3s infinite ease-in-out;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.25; transform: scale(0.9); }
+      50% { opacity: 0.9; transform: scale(1.15); }
+    }
+
+     /* Gentle Bobbing Animation */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .float-slow {
+      animation: floatSlow 3.4s ease-in-out infinite;
+    }
+
+    /* SVG Wheel Interactivity */
+    .friend-strip-group {
+      cursor: pointer;
+      transition: filter 0.18s ease;
+    }
+    .friend-strip-group:hover {
+      filter: brightness(1.05) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.45));
+    }
+    .wheel-svg {
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+     ::-webkit-scrollbar-thumb {
+      background: var(--accent-lavender);
+      border: 2px solid var(--border-color);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center p-3 sm:p-6">
+
+  <!-- Decorative Floating Stars (Visible especially in Dark Mode) -->
+  <div id="starfield" class="fixed inset-0 pointer-events-none overflow-hidden z-0 hidden">
+    <span class="star-twinkle absolute top-10 left-[12%] text-xl" style="animation-delay:0.2s">✨</span>
+    <span class="star-twinkle absolute top-24 right-[15%] text-lg" style="animation-delay:1.1s">⭐</span>
+    <span class="star-twinkle absolute bottom-20 left-[18%] text-2xl" style="animation-delay:0.7s">🌙</span>
+    <span class="star-twinkle absolute bottom-28 right-[10%] text-xl" style="animation-delay:1.8s">✨</span>
+    <span class="star-twinkle absolute top-1/2 left-[6%] text-base" style="animation-delay:2.3s">💫</span>
+  </div>
+
+  <!-- Main Widget Container -->
+  <main class="relative z-10 w-full max-w-2xl toon-card p-4 sm:p-7 flex flex-col gap-5">
+
+     <!-- Header Bar: Brand + Toggles + Settings -->
+    <header class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl float-slow"
+             style="background: var(--accent-pink); border: 3px solid var(--border-color); box-shadow: 0 3px 0 var(--shadow-color);">
+          🪐
+        </div>
+        <div>
+          <h1 class="font-display text-xl sm:text-2xl font-bold tracking-tight leading-none">ELLIPSING</h1>
+          <p class="text-xs sm:text-sm font-bold opacity-75 mt-0.5">Tap any ring to customize!</p>
+        </div>
+      </div>
+
+      <!-- Controls: 12h/24h Toggle, Light/Dark Toggle, Settings -->
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <!-- 12H / 24H Toggle Pill -->
+        <button id="toggleFormatBtn" class="toon-btn px-3 py-1.5 text-xs sm:text-sm flex items-center gap-1.5"
+                style="background: var(--accent-butter); color: #3D314A;" title="Switch 12h / 24h format">
+          <span>🕒</span>
+          <span id="formatLabel">12H</span>
+        </button>
+
+        <!-- Light / Dark Theme Toggle -->
+        <button id="toggleThemeBtn" class="toon-btn px-3 py-1.5 text-xs sm:text-sm flex items-center gap-1.5"
+                style="background: var(--accent-sky); color: #3D314A;" title="Switch Light / Dark theme">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel" class="hidden sm:inline">Day</span>
+        </button>
+
+        <!-- Settings / Manage Friends Button -->
+        <button id="openSettingsBtn" class="toon-btn px-3.5 py-1.5 text-xs sm:text-sm flex items-center gap-1.5"
+                style="background: var(--accent-lavender); color: #3D314A;" title="Add or manage friends">
+          <span>⚙️</span>
+          <span>Friends</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Time Scrubber Banner (Shows Live vs Preview Offset) -->
+    <div class="toon-subcard px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-xs sm:text-sm font-extrabold">
+        <span id="livePulse" class="inline-block w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#3D314A]"></span>
+        <span id="timeModeText">Live Sync • Drag the wheel to time-travel!</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="offsetBadge" class="hidden px-2.5 py-0.5 rounded-full text-xs font-extrabold border-2 border-[#3D314A]"
+              style="background: var(--accent-butter); color: #3D314A;">+0h 0m</span>
+        <button id="resetNowBtn" class="hidden toon-btn px-3 py-1 text-xs"
+                style="background: var(--accent-mint); color: #3D314A;">
+          ↺ Reset Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Centerpiece: Interactive Concentric Timezone Wheel -->
+    <div class="relative w-full flex flex-col items-center justify-center">
+      <div class="w-full max-w-[490px] aspect-square relative flex items-center justify-center">
+        <svg id="timezoneWheel" viewBox="0 0 520 520" class="w-full h-full wheel-svg overflow-visible">
+          <!-- Wheel is procedurally rendered with crisp SVG arcs, textPaths, sleep zones, and badges -->
+        </svg>
+      </div>
+      
+      <!-- Legend Pill Strip -->
+      <div class="flex flex-wrap items-center justify-center gap-3 mt-1 text-xs font-extrabold opacity-85">
+        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-[#3D314A]" style="background: var(--card-sub);">
+          <span class="inline-block w-3.5 h-3.5 rounded-full border-2 border-[#3D314A]" style="background: var(--accent-mint);"></span>
+          Awake Window
+        </span>
+        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-[#3D314A]" style="background: var(--card-sub);">
+          <span class="inline-block w-3.5 h-3.5 rounded-full border-2 border-[#3D314A] bg-[#5E5278]"></span>
+          💤 Sleep Window
+        </span>
+        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-[#3D314A]" style="background: var(--card-sub);">
+          <span>👆</span> Tap ring to edit color & name
+        </span>
+      </div>
+    </div>
+
+    <!-- Friend Status Cards Strip (Quick Glance + Tap to Edit) -->
+    <section class="flex flex-col gap-2.5">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="font-display text-base sm:text-lg font-bold flex items-center gap-1.5">
+          <span>💌</span> Squad Sleep & Time Status
+        </h2>
+        <button id="quickAddFriendBtn" class="toon-btn px-3 py-1 text-xs"
+                style="background: var(--accent-mint); color: #3D314A;">
+          + Add Friend
+        </button>
+      </div>
+
+      <div id="friendCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Dynamically populated friend cards -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: TAP-ON-STRIP FRIEND EDITOR WITH INTERACTIVE HSL COLOR WHEEL  -->
+  <!-- ===================================================================== -->
+  <div id="editFriendModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/45 backdrop-blur-xs">
+    <div class="toon-card w-full max-w-md p-5 sm:p-6 flex flex-col gap-4 max-h-[92vh] overflow-y-auto relative">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-xl font-bold flex items-center gap-2">
+          <span>🎨</span> Customize Strip
+        </h3>
+        <button id="closeEditModalBtn" class="toon-btn w-9 h-9 flex items-center justify-center text-base"
+                style="background: var(--accent-pink); color: #3D314A;">✕</button>
+      </div>
+
+      <!-- Name & Cute Avatar Picker -->
+      <div class="grid grid-cols-[76px_1fr] gap-2.5 items-end">
+        <div>
+          <label class="block text-xs font-extrabold mb-1 uppercase tracking-wider opacity-80">Icon</label>
+          <button id="emojiCycleBtn" type="button" class="toon-input w-full text-center text-2xl py-1.5 cursor-pointer hover:scale-105 transition-transform"
+                  title="Tap to cycle cute icon">🐰</button>
+        </div>
+        <div>
+          <label for="editNameInput" class="block text-xs font-extrabold mb-1 uppercase tracking-wider opacity-80">Friend's Name</label>
+          <input id="editNameInput" type="text" maxlength="16" placeholder="e.g. Maya" class="toon-input w-full text-base" />
+        </div>
+      </div>
+
+       <!-- Quick Emoji Bar -->
+      <div class="flex items-center justify-between gap-1 px-1" id="emojiQuickRow">
+        <!-- Populated via JS -->
+      </div>
+
+      <!-- Interactive Canvas HSL Color Wheel + Pastel Swatches -->
+      <div class="toon-subcard p-3.5 flex flex-col items-center gap-3">
+        <div class="w-full flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider opacity-80">Strip Color Wheel</span>
+          <div class="flex items-center gap-2">
+            <span id="selectedColorHex" class="text-xs font-extrabold px-2 py-0.5 rounded-full border-2 border-[#3D314A]"
+                  style="background: #FFB5C2; color: #3D314A;">#FFB5C2</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+          <!-- HTML5 Canvas Color Wheel -->
+          <div class="relative w-[156px] h-[156px] shrink-0">
+            <canvas id="colorWheelCanvas" width="156" height="156" class="rounded-full cursor-crosshair border-[3px] border-[#3D314A] shadow-sm"></canvas>
+            <div id="colorWheelCursor" class="w-5 h-5 rounded-full border-[3px] border-[#3D314A] bg-white shadow-md pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+                 style="left: 78px; top: 78px;"></div>
+          </div>
+
+          <!-- Pastel Quick Swatches + Lightness Slider -->
+          <div class="flex flex-col gap-2.5 w-full">
+            <span class="text-xs font-extrabold opacity-75">Pastel Presets:</span>
+            <div id="pastelSwatches" class="grid grid-cols-5 gap-2">
+              <!-- Swatch buttons injected by JS -->
+            </div>
+            <div class="mt-1">
+              <div class="flex justify-between text-[11px] font-extrabold opacity-75 mb-1">
+                <span>Pastel Brightness</span>
+                <span id="lightnessVal">82%</span>
+              </div>
+              <input id="lightnessSlider" type="range" min="55" max="92" value="82"
+                     class="w-full accent-[#3D314A] cursor-pointer" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GMT / UTC Timezone Selector -->
+      <div>
+        <label for="editUtcSelect" class="block text-xs font-extrabold mb-1 uppercase tracking-wider opacity-80">GMT / UTC Timezone</label>
+        <select id="editUtcSelect" class="toon-input w-full text-sm cursor-pointer">
+          <!-- UTC offsets populated by JS -->
+        </select>
+      </div>
+
+      <!-- Sleep Schedule Window -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="editSleepStart" class="block text-xs font-extrabold mb-1 uppercase tracking-wider opacity-80">💤 Bedtime</label>
+          <select id="editSleepStart" class="toon-input w-full text-sm cursor-pointer"></select>
+        </div>
+        <div>
+          <label for="editWakeTime" class="block text-xs font-extrabold mb-1 uppercase tracking-wider opacity-80">☀️ Wake Up</label>
+          <select id="editWakeTime" class="toon-input w-full text-sm cursor-pointer"></select>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between gap-3 pt-1">
+        <button id="deleteFriendBtn" type="button" class="toon-btn px-4 py-2 text-sm"
+                style="background: #FF9AA2; color: #3D314A;">
+          🗑️ Remove
+        </button>
+        <button id="saveFriendBtn" type="button" class="toon-btn px-6 py-2 text-sm flex-1"
+                style="background: var(--accent-mint); color: #3D314A;">
+          ✨ Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: SETTINGS & ADD NEW FRIEND DRAWER                             -->
+  <!-- ===================================================================== -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/45 backdrop-blur-xs">
+    <div class="toon-card w-full max-w-lg p-5 sm:p-6 flex flex-col gap-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-xl font-bold flex items-center gap-2">
+          <span>⚙️</span> Timezone Squad Settings
+        </h3>
+        <button id="closeSettingsBtn" class="toon-btn w-9 h-9 flex items-center justify-center text-base"
+                style="background: var(--accent-pink); color: #3D314A;">✕</button>
+      </div>
+
+      <!-- Add New Friend Form Card -->
+      <form id="addFriendForm" class="toon-subcard p-4 flex flex-col gap-3">
+        <h4 class="font-display text-base font-bold flex items-center gap-1.5">
+          <span>➕</span> Add a Long-Distance Friend
+        </h4>
+
+          <div class="grid grid-cols-[68px_1fr] gap-2.5">
+          <select id="newFriendEmoji" class="toon-input text-xl text-center px-1 cursor-pointer">
+            <option value="🦢">🦢</option>
+            <option value="⛰️">⛰️</option>
+            <option value="💪">💪</option>
+            <option value="🍕">🍕</option>
+            <option value="🪼">🪼</option>
+            <option value="🌔">🌔</option>
+            <option value="🐙">🐙</option>
+            <option value="🌺">🌺</option>
+            <option value="🛶">🛶</option>
+            <option value="🪿">🪿</option>
+          </select>
+          <input id="newFriendName" type="text" required maxlength="16" placeholder="Friend's name (e.g. Chloe)"
+                 class="toon-input w-full text-sm" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase opacity-75 mb-1">GMT / UTC Offset</label>
+            <select id="newFriendUtc" class="toon-input w-full text-sm cursor-pointer"></select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase opacity-75 mb-1">Strip Color</label>
+            <div id="newFriendColorRow" class="flex items-center gap-1.5 h-[42px]">
+              <!-- Pastel swatches populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase opacity-75 mb-1">💤 Sleeps From</label>
+            <select id="newFriendSleepStart" class="toon-input w-full text-sm cursor-pointer"></select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-extrabold uppercase opacity-75 mb-1">☀️ Asleep Until</label>
+            <select id="newFriendWakeTime" class="toon-input w-full text-sm cursor-pointer"></select>
+          </div>
+        </div>
+
+        <button type="submit" class="toon-btn w-full py-2.5 text-sm mt-1"
+                style="background: var(--accent-mint); color: #3D314A;">
+          🌈 Add to Timezone Wheel
+        </button>
+      </form>
+
+      <!-- Manage & Reorder Existing Rings -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <h4 class="font-display text-base font-bold">Wheel Rings (Outer → Inner)</h4>
+          <span class="text-xs font-bold opacity-70">Max 6 rings</span>
+        </div>
+        <div id="settingsFriendList" class="flex flex-col gap-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Footer Utility -->
+      <div class="flex items-center justify-between pt-2 border-t-2 border-dashed border-[#3D314A]/25">
+        <button id="resetDemoBtn" type="button" class="text-xs font-extrabold underline opacity-75 hover:opacity-100 cursor-pointer">
+          Reset sample friends
+        </button>
+        <button id="doneSettingsBtn" type="button" class="toon-btn px-5 py-1.5 text-sm"
+                style="background: var(--accent-lavender); color: #3D314A;">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Pill -->
+  <div id="toastPill" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-200 translate-y-3">
+    <div class="px-4 py-2 rounded-full border-[3px] border-[#3D314A] shadow-md font-display font-semibold text-sm flex items-center gap-2"
+         style="background: var(--accent-butter); color: #3D314A;">
+      <span id="toastIcon">✨</span>
+      <span id="toastText">Saved!</span>
+    </div>
+  </div>
+
+  <script>
+
+    const STORAGE_KEY = 'ELLIPSING_widget_state_v1';
+
+    const PASTEL_PALETTE = [
+      '#FFB5C2', // Strawberry Milk
+      '#B8F2E6', // Mint Sorbet
+      '#D8C7FF', // Lavender Cloud
+      '#FFF0A5', // Lemon Custard
+      '#BFE6FF', // Baby Sky
+      '#FFD1A9', // Peach Cream
+      '#F7C6F0', // Bubblegum Lilac
+      '#C7F2A7', // Matcha Sprout
+      '#FFC4B2', // Coral Pastel
+      '#BCECE0'  // Seafoam
+    ];
+
+    const CUTE_EMOJIS = ['🦢', '⛰️', '💪', '🍕', '🪼', '🌔', '🐙', '🌺', '🛶', '🪿'];
+
+    // Comprehensive GMT/UTC offsets including half & 45-min offsets
+    const UTC_OFFSETS = [
+      { label: 'UTC-12:00', value: -12 },
+      { label: 'UTC-11:00', value: -11 },
+      { label: 'UTC-10:00', value: -10 },
+      { label: 'UTC-09:00', value: -9 },
+      { label: 'UTC-08:00', value: -8 },
+      { label: 'UTC-07:00', value: -7 },
+      { label: 'UTC-06:00', value: -6 },
+      { label: 'UTC-05:00', value: -5 },
+      { label: 'UTC-04:00', value: -4 },
+      { label: 'UTC-03:30', value: -3.5 },
+      { label: 'UTC-03:00', value: -3 },
+      { label: 'UTC-02:00', value: -2 },
+      { label: 'UTC-01:00', value: -1 },
+      { label: 'UTC+00:00', value: 0 },
+      { label: 'UTC+01:00', value: 1 },
+      { label: 'UTC+02:00', value: 2 },
+      { label: 'UTC+03:00', value: 3 },
+      { label: 'UTC+03:30', value: 3.5 },
+      { label: 'UTC+04:00', value: 4 },
+      { label: 'UTC+04:30', value: 4.5 },
+      { label: 'UTC+05:00', value: 5 },
+      { label: 'UTC+05:30', value: 5.5 },
+      { label: 'UTC+05:45', value: 5.75 },
+      { label: 'UTC+06:00', value: 6 },
+      { label: 'UTC+06:30', value: 6.5 },
+      { label: 'UTC+07:00', value: 7 },
+      { label: 'UTC+08:00', value: 8 },
+      { label: 'UTC+09:00', value: 9 },
+      { label: 'UTC+09:30', value: 9.5 },
+      { label: 'UTC+10:00', value: 10 },
+      { label: 'UTC+11:00', value: 11 },
+      { label: 'UTC+12:00', value: 12 },
+      { label: 'UTC+13:00', value: 13 }
+    ];
+
+    function getLocalUtcOffsetHours() {
+      const offsetHours = -new Date().getTimezoneOffset() / 60;
+      // Snap to nearest valid UTC_OFFSETS entry
+      let closest = UTC_OFFSETS[0].value;
+      let minDiff = Infinity;
+      for (const item of UTC_OFFSETS) {
+        const diff = Math.abs(item.value - offsetHours);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = item.value;
+        }
+      }
+      return closest;
+    }
+
+    function createDefaultFriends() {
+      return [
+        {
+          id: 'friend-you',
+          name: 'you',
+          emoji: '🫰',
+          utcOffset: getLocalUtcOffsetHours(),
+          color: '#FFB5C2',
+          sleepStart: 23, // 11:00 PM
+          wakeTime: 7     // 7:00 AM
+        },
+        {
+          id: 'friend-1',
+          name: 'add name',
+          emoji: '🪿',
+          utcOffset: -5,  // UTC-5 (New York)
+          color: '#B8F2E6',
+          sleepStart: 23.5, // 11:30 PM
+          wakeTime: 7.5     // 7:30 AM
+        },
+        {
+          id: 'friend-2',
+          name: 'add name',
+          emoji: '🦢',
+          utcOffset: 1,   // UTC+1 (Paris)
+          color: '#D8C7FF',
+          sleepStart: 0,  // 12:00 AM
+          wakeTime: 8     // 8:00 AM
+        },
+        {
+          id: 'friend-3',
+          name: 'add name',
+          emoji: '💪',
+          utcOffset: 9,   // UTC+9 (Tokyo)
+          color: '#FFF0A5',
+          sleepStart: 23, // 11:00 PM
+          wakeTime: 6.5   // 6:30 AM
+        }
+      ];
+    }
+
+      let state = {
+      is24Hour: false,
+      theme: 'light',
+      friends: createDefaultFriends(),
+      scrubOffsetMinutes: 0, // 0 = live real-time; +/- minutes when scrubbing the wheel
+      editingFriendId: null,
+      newFriendColor: '#BFE6FF'
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (typeof parsed.is24Hour === 'boolean') state.is24Hour = parsed.is24Hour;
+          if (parsed.theme === 'light' || parsed.theme === 'dark') state.theme = parsed.theme;
+          if (Array.isArray(parsed.friends) && parsed.friends.length > 0) {
+            state.friends = parsed.friends;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load saved ELLIPSING state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          is24Hour: state.is24Hour,
+          theme: state.theme,
+          friends: state.friends
+        }));
+      } catch (e) {
+        console.warn('Could not persist state:', e);
+      }
+    }
+
+    function getReferenceUtcMs() {
+      return Date.now() + state.scrubOffsetMinutes * 60 * 1000;
+    }
+
+    function getFriendTimeParts(utcOffset) {
+      const refMs = getReferenceUtcMs();
+      const shiftedMs = refMs + utcOffset * 3600 * 1000;
+      const d = new Date(shiftedMs);
+      const hours = d.getUTCHours();
+      const minutes = d.getUTCMinutes();
+      const seconds = d.getUTCSeconds();
+      const decimalHours = hours + minutes / 60 + seconds / 3600;
+      return { hours, minutes, seconds, decimalHours };
+    }
+
+    function formatDecimalHour(decHour, is24Hour) {
+      const normalized = ((decHour % 24) + 24) % 24;
+      const h = Math.floor(normalized);
+      const m = Math.round((normalized - h) * 60) % 60;
+      return formatHM(h, m, is24Hour);
+    }
+
+    function formatHM(hours, minutes, is24Hour) {
+      const mStr = String(minutes).padStart(2, '0');
+      if (is24Hour) {
+        return `${String(hours).padStart(2, '0')}:${mStr}`;
+      }
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const h12 = hours % 12 === 0 ? 12 : hours % 12;
+      return `${h12}:${mStr} ${period}`;
+    }
+
+    function formatUtcBadge(offset) {
+      const sign = offset >= 0 ? '+' : '-';
+      const abs = Math.abs(offset);
+      const h = Math.floor(abs);
+      const m = Math.round((abs - h) * 60);
+      return m > 0 ? `UTC${sign}${h}:${String(m).padStart(2, '0')}` : `UTC${sign}${h}`;
+    }
+
+    /**
+     * Determines whether a friend is currently asleep and computes duration until wake/sleep.
+     */
+    function getSleepStatus(friend, currentDecHour) {
+      const start = ((friend.sleepStart % 24) + 24) % 24;
+      const end = ((friend.wakeTime % 24) + 24) % 24;
+      const now = ((currentDecHour % 24) + 24) % 24;
+
+      let isAsleep = false;
+      if (start < end) {
+        isAsleep = now >= start && now < end;
+      } else if (start > end) {
+        // Crosses midnight (e.g., 23:00 to 07:00)
+        isAsleep = now >= start || now < end;
+      }
+
+      if (isAsleep) {
+        const hoursLeft = (end - now + 24) % 24;
+        const totalMins = Math.max(1, Math.round(hoursLeft * 60));
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        const countdown = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        const wakeFormatted = formatDecimalHour(end, state.is24Hour);
+        return {
+          isAsleep: true,
+          headline: `Asleep until ${wakeFormatted}`,
+          subline: `Wakes in ${countdown}`,
+          wakeFormatted
+        };
+
+        } else {
+        const hoursUntilSleep = (start - now + 24) % 24;
+        const totalMins = Math.max(1, Math.round(hoursUntilSleep * 60));
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        const countdown = h > 0 ? `${h}h ${m}m` : `${m}m`;
+        const sleepFormatted = formatDecimalHour(start, state.is24Hour);
+        return {
+          isAsleep: false,
+          headline: `Awake • sleeps at ${sleepFormatted}`,
+          subline: `Bedtime in ${countdown}`,
+          wakeFormatted: formatDecimalHour(end, state.is24Hour)
+        };
+      }
+    }
+
+     // =========================================================================
+    // SVG GEOMETRY & CONCENTRIC WHEEL RENDERING
+    // =========================================================================
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const CX = 260;
+    const CY = 260;
+
+    function polarToCartesian(cx, cy, radius, angleDeg) {
+      // 0 deg at top (12 o'clock), clockwise positive
+      const rad = ((angleDeg - 90) * Math.PI) / 180;
+      return {
+        x: cx + radius * Math.cos(rad),
+        y: cy + radius * Math.sin(rad)
+      };
+    }
+
+    /**
+     * Builds an SVG annular sector (donut slice) path from startAngle to endAngle (in degrees).
+     */
+    function describeRingArc(cx, cy, innerR, outerR, startAngle, endAngle) {
+      let sweep = ((endAngle - startAngle) % 360 + 360) % 360;
+      if (sweep === 0) sweep = 359.99;
+      const largeArcFlag = sweep > 180 ? 1 : 0;
+
+      const p1 = polarToCartesian(cx, cy, outerR, startAngle);
+      const p2 = polarToCartesian(cx, cy, outerR, startAngle + sweep);
+      const p3 = polarToCartesian(cx, cy, innerR, startAngle + sweep);
+      const p4 = polarToCartesian(cx, cy, innerR, startAngle);
+
+      return [
+        `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`,
+        `A ${outerR} ${outerR} 0 ${largeArcFlag} 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`,
+        `L ${p3.x.toFixed(2)} ${p3.y.toFixed(2)}`,
+        `A ${innerR} ${innerR} 0 ${largeArcFlag} 0 ${p4.x.toFixed(2)} ${p4.y.toFixed(2)}`,
+        'Z'
+      ].join(' ');
+    }
+
+    /**
+     * Builds a smooth circular text path centered along a ring radius so curved labels stay upright.
+     */
+    function describeTextArc(cx, cy, radius, centerAngle, spanDeg) {
+      const normalizedCenter = ((centerAngle % 360) + 360) % 360;
+      // Flip text direction on bottom half of circle so text is never upside down
+      const isBottomHalf = normalizedCenter > 95 && normalizedCenter < 265;
+      if (!isBottomHalf) {
+        const start = centerAngle - spanDeg / 2;
+        const end = centerAngle + spanDeg / 2;
+        const p1 = polarToCartesian(cx, cy, radius, start);
+        const p2 = polarToCartesian(cx, cy, radius, end);
+        return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${radius} ${radius} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      } else {
+        const start = centerAngle + spanDeg / 2;
+        const end = centerAngle - spanDeg / 2;
+        const p1 = polarToCartesian(cx, cy, radius, start);
+        const p2 = polarToCartesian(cx, cy, radius, end);
+        return `M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${radius} ${radius} 0 0 0 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+      }
+    }
+
+    function createSvgEl(tag, attrs = {}) {
+      const el = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        el.setAttribute(k, v);
+      }
+      return el;
+    }
+
+    /**
+     * Maps a friend's decimal hour [0..24) to wheel degrees [0..360).
+     * Note: The wheel always represents a full 24-hour solar cycle so sleep & wake arcs wrap cleanly,
+     * while the dial labels dynamically adapt to 12H (12a, 3a, 6a, 9a, 12p, 3p, 6p, 9p) or 24H (00, 03, 06...21)!
+     */
+    function hourToAngle(decHour) {
+      return (((decHour % 24) + 24) % 24) * 15; // 360 / 24 = 15 deg per hour
+    }
+
+    function renderWheel() {
+      const svg = document.getElementById('timezoneWheel');
+      svg.innerHTML = '';
+
+      const isDark = state.theme === 'dark';
+      const strokeColor = isDark ? '#130F1F' : '#3D314A';
+      const dialBg = isDark ? '#231D36' : '#FFFDFB';
+      const tickColor = isDark ? '#9D8EC2' : '#6A5B7B';
+
+      // Defs for patterns & curved text paths
+      const defs = createSvgEl('defs');
+
+      // Cute diagonal sleepy stripe pattern for sleep arcs
+      const sleepPattern = createSvgEl('pattern', {
+        id: 'sleepStripes',
+        width: '10',
+        height: '10',
+        patternTransform: 'rotate(45 0 0)',
+        patternUnits: 'userSpaceOnUse'
+      });
+      sleepPattern.appendChild(createSvgEl('rect', {
+        width: '10',
+        height: '10',
+        fill: isDark ? 'rgba(15, 11, 28, 0.52)' : 'rgba(61, 49, 74, 0.28)'
+      }));
+      sleepPattern.appendChild(createSvgEl('line', {
+        x1: '0', y1: '0', x2: '0', y2: '10',
+        stroke: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.35)',
+        'stroke-width': '3'
+      }));
+      defs.appendChild(sleepPattern);
+      svg.appendChild(defs);
+
+      // Outer Cartoon Rim Shadow + Base Circle
+      svg.appendChild(createSvgEl('circle', {
+        cx: CX, cy: CY + 6, r: 246,
+        fill: strokeColor
+      }));
+      svg.appendChild(createSvgEl('circle', {
+        cx: CX, cy: CY, r: 246,
+        fill: dialBg,
+        stroke: strokeColor,
+        'stroke-width': '4'
+      }));
+
+      // Outer Dial Hour Ticks & Labels (12h vs 24h)
+      const labelRadius = 227;
+      for (let h = 0; h < 24; h++) {
+        const angle = h * 15;
+        const isMajor = h % 3 === 0;
+        const rOuter = 242;
+        const rInner = isMajor ? 236 : 239;
+        const p1 = polarToCartesian(CX, CY, rOuter, angle);
+        const p2 = polarToCartesian(CX, CY, rInner, angle);
+
+        svg.appendChild(createSvgEl('line', {
+          x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+          stroke: tickColor,
+          'stroke-width': isMajor ? '2.5' : '1.5',
+          'stroke-linecap': 'round'
+        }));
+
+        if (isMajor) {
+          const lp = polarToCartesian(CX, CY, labelRadius, angle);
+          let labelStr = '';
+          if (state.is24Hour) {
+            labelStr = String(h).padStart(2, '0');
+          } else {
+            if (h === 0) labelStr = '12a';
+            else if (h === 12) labelStr = '12p';
+            else if (h < 12) labelStr = `${h}a`;
+            else labelStr = `${h - 12}p`;
+          }
+
+
+          const txt = createSvgEl('text', {
+            x: lp.x,
+            y: lp.y,
+            fill: tickColor,
+            'font-family': 'Fredoka, sans-serif',
+            'font-size': '11.5',
+            'font-weight': '700',
+            'text-anchor': 'middle',
+            'dominant-baseline': 'central'
+          });
+          txt.textContent = labelStr;
+          svg.appendChild(txt);
+        }
+      }
+
+      // Compute Concentric Ring Radii for Friends (up to 6 strips)
+      const count = state.friends.length;
+      const outerMaxR = 211;
+      const innerMinR = 64;
+      const ringGap = count > 4 ? 4 : 5;
+      const totalAvailable = outerMaxR - innerMinR - ringGap * Math.max(0, count - 1);
+      const ringThickness = Math.min(34, Math.max(20, totalAvailable / Math.max(1, count)));
+
+     state.friends.forEach((friend, idx) => {
+        const outerR = outerMaxR - idx * (ringThickness + ringGap);
+        const innerR = outerR - ringThickness;
+        const midR = (outerR + innerR) / 2;
+
+        const timeParts = getFriendTimeParts(friend.utcOffset);
+        const currentAngle = hourToAngle(timeParts.decimalHours);
+        const sleepStartAngle = hourToAngle(friend.sleepStart);
+        const wakeAngle = hourToAngle(friend.wakeTime);
+        const sleepStatus = getSleepStatus(friend, timeParts.decimalHours);
+
+        // Group for interactive tap-on-strip
+        const g = createSvgEl('g', {
+          class: 'friend-strip-group',
+          'data-friend-id': friend.id
+        });
+
+        // 1. Full Colored Concentric Strip (Base Ring)
+        const ringBase = createSvgEl('circle', {
+          cx: CX,
+          cy: CY,
+          r: midR,
+          fill: 'none',
+          stroke: friend.color,
+          'stroke-width': ringThickness
+        });
+        g.appendChild(ringBase);
+
+        // Inner & Outer Cartoon Borders for the Strip
+        g.appendChild(createSvgEl('circle', {
+          cx: CX, cy: CY, r: outerR,
+          fill: 'none',
+          stroke: strokeColor,
+          'stroke-width': '2.6'
+        }));
+        g.appendChild(createSvgEl('circle', {
+          cx: CX, cy: CY, r: innerR,
+          fill: 'none',
+          stroke: strokeColor,
+          'stroke-width': '2.6'
+        }));
+
+        // 2. Shaded Sleep Window Arc ("until when they would be asleep")
+        if (friend.sleepStart !== friend.wakeTime) {
+          const sleepArcD = describeRingArc(CX, CY, innerR + 1.2, outerR - 1.2, sleepStartAngle, wakeAngle);
+          const sleepPath = createSvgEl('path', {
+            d: sleepArcD,
+            fill: 'url(#sleepStripes)'
+          });
+          g.appendChild(sleepPath);
+
+          // Cute small moon icon at bedtime start & sun icon at wake time if ring is thick enough
+          if (ringThickness >= 23) {
+            const wakePos = polarToCartesian(CX, CY, midR, wakeAngle);
+            const wakeBadge = createSvgEl('text', {
+              x: wakePos.x,
+              y: wakePos.y,
+              'font-size': '11',
+              'text-anchor': 'middle',
+              'dominant-baseline': 'central'
+            });
+            wakeBadge.textContent = '☀️';
+            g.appendChild(wakeBadge);
+          }
+        }
+
+        // 3. Curved Label Wrapped Along the Strip (Name + Current Time + Sleep Indicator)
+        const formattedTime = formatHM(timeParts.hours, timeParts.minutes, state.is24Hour);
+        const statusEmoji = sleepStatus.isAsleep ? '💤' : '';
+        const stripLabel = `${friend.name} • ${formattedTime} ${statusEmoji}`.trim();
+
+         // Position text opposite the current pointer dot so they never collide
+        const textCenterAngle = currentAngle + 180;
+        const arcSpan = Math.min(155, Math.max(85, (stripLabel.length * 6.5 * 180) / (Math.PI * midR)));
+        const textPathId = `strip-text-path-${friend.id}`;
+        const textPathEl = createSvgEl('path', {
+          id: textPathId,
+          d: describeTextArc(CX, CY, midR, textCenterAngle, arcSpan)
+        });
+        defs.appendChild(textPathEl);
+
+        const textEl = createSvgEl('text', {
+          fill: '#2B2138',
+          'font-family': 'Fredoka, sans-serif',
+          'font-size': ringThickness >= 27 ? '12.5' : '11',
+          'font-weight': '600',
+          'dominant-baseline': 'central',
+          'letter-spacing': '0.3px'
+        });
+
+        // Add subtle white pill halo behind text when over dark sleep stripes for crisp contrast
+        const textHalo = textEl.cloneNode();
+        textHalo.setAttribute('stroke', 'rgba(255, 255, 255, 0.85)');
+        textHalo.setAttribute('stroke-width', '3.5');
+        textHalo.setAttribute('stroke-linejoin', 'round');
+
+          const tpHalo = createSvgEl('textPath', {
+          href: `#${textPathId}`,
+          startOffset: '50%',
+          'text-anchor': 'middle'
+        });
+        tpHalo.textContent = stripLabel;
+        textHalo.appendChild(tpHalo);
+
+        const tpMain = createSvgEl('textPath', {
+          href: `#${textPathId}`,
+          startOffset: '50%',
+          'text-anchor': 'middle'
+        });
+        tpMain.textContent = stripLabel;
+        textEl.appendChild(tpMain);
+
+        g.appendChild(textHalo);
+        g.appendChild(textEl);
+
+        
+        // 4. Current Time Marker Pin on the Friend's Ring
+        const pinPos = polarToCartesian(CX, CY, midR, currentAngle);
+        const pinRadius = Math.min(14, ringThickness * 0.48);
+
+        g.appendChild(createSvgEl('circle', {
+          cx: pinPos.x,
+          cy: pinPos.y + 1.5,
+          r: pinRadius,
+          fill: strokeColor
+        }));
+        g.appendChild(createSvgEl('circle', {
+          cx: pinPos.x,
+          cy: pinPos.y,
+          r: pinRadius,
+          fill: '#FFFFFF',
+          stroke: strokeColor,
+          'stroke-width': '2.4'
+        }));
+
+        const emojiPin = createSvgEl('text', {
+          x: pinPos.x,
+          y: pinPos.y + 0.5,
+          'font-size': pinRadius >= 12 ? '13' : '10.5',
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central'
+        });
+        
+        emojiPin.textContent = friend.emoji;
+        g.appendChild(emojiPin);
+
+        // Click / Tap listener on this specific strip
+        g.addEventListener('click', (e) => {
+          if (wheelDragMoved) return;
+          e.stopPropagation();
+          openEditFriendModal(friend.id);
+        });
+
+        svg.appendChild(g);
+      });
+
+      // 5. Center Cute Core Hub (Shows Reference Time & Mode)
+      const coreR = Math.max(46, innerMinR - 10);
+      svg.appendChild(createSvgEl('circle', {
+        cx: CX, cy: CY + 3, r: coreR,
+        fill: strokeColor
+      }));
+      svg.appendChild(createSvgEl('circle', {
+        cx: CX, cy: CY, r: coreR,
+        fill: isDark ? '#352D4D' : '#FFF4E8',
+        stroke: strokeColor,
+        'stroke-width': '3.5'
+      }));
+
+      // Display primary user's time in the center hub
+      const primaryFriend = state.friends[0];
+      const centerParts = primaryFriend
+        ? getFriendTimeParts(primaryFriend.utcOffset)
+        : getFriendTimeParts(getLocalUtcOffsetHours());
+      const centerTimeStr = formatHM(centerParts.hours, centerParts.minutes, state.is24Hour);
+
+      const hubEmoji = createSvgEl('text', {
+        x: CX, y: CY - 14,
+        'font-size': '16',
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central'
+      });
+      hubEmoji.textContent = state.scrubOffsetMinutes === 0 ? '💖' : '🔮';
+      svg.appendChild(hubEmoji);
+
+      const hubTime = createSvgEl('text', {
+        x: CX, y: CY + 5,
+        fill: isDark ? '#FDF8FF' : '#3D314A',
+        'font-family': 'Fredoka, sans-serif',
+        'font-size': state.is24Hour ? '15' : '13.5',
+        'font-weight': '700',
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central'
+      });
+      hubTime.textContent = centerTimeStr;
+      svg.appendChild(hubTime);
+
+      const hubSub = createSvgEl('text', {
+        x: CX, y: CY + 21,
+        fill: isDark ? '#C2B6D9' : '#7B6D8D',
+        'font-family': 'Nunito, sans-serif',
+        'font-size': '9.5',
+        'font-weight': '800',
+        'text-anchor': 'middle',
+        'dominant-baseline': 'central'
+      });
+      hubSub.textContent = primaryFriend ? primaryFriend.name.toUpperCase() : 'LOCAL';
+      svg.appendChild(hubSub);
+    }
+
+    // =========================================================================
+    // FRIEND STATUS CARDS RENDERING
+    // =========================================================================
+    function renderFriendCards() {
+      const grid = document.getElementById('friendCardsGrid');
+      grid.innerHTML = '';
+      
+      state.friends.forEach((friend) => {
+        const parts = getFriendTimeParts(friend.utcOffset);
+        const timeStr = formatHM(parts.hours, parts.minutes, state.is24Hour);
+        const sleepInfo = getSleepStatus(friend, parts.decimalHours);
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'toon-subcard p-3 text-left flex items-center justify-between gap-2.5 hover:-translate-y-0.5 cursor-pointer w-full';
+        card.addEventListener('click', () => openEditFriendModal(friend.id));
+
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-11 h-11 rounded-2xl shrink-0 flex items-center justify-center text-xl border-[2.5px] border-[#3D314A]"
+                 style="background: ${friend.color};">
+              ${friend.emoji}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-display font-bold text-base truncate">${escapeHtml(friend.name)}</span>
+                <span class="text-[11px] font-extrabold px-1.5 py-0.2 rounded-md border border-[#3D314A]/30 opacity-80">
+                  ${formatUtcBadge(friend.utcOffset)}
+                </span>
+              </div>
+              <div class="text-xs font-extrabold mt-0.5 flex items-center gap-1 ${sleepInfo.isAsleep ? 'text-indigo-500 dark:text-indigo-300' : 'opacity-80'}">
+                <span>${sleepInfo.isAsleep ? '💤' : '☀️'}</span>
+                <span class="truncate">${sleepInfo.headline}</span>
+              </div>
+              <div class="text-[11px] font-bold opacity-65">
+                ${sleepInfo.subline}
+              </div>
+              </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-display font-bold text-base sm:text-lg leading-tight">${timeStr}</div>
+            <div class="text-[10px] font-extrabold uppercase tracking-wider opacity-60 mt-0.5">Edit 🎨</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    // =========================================================================
+    // INTERACTIVE WHEEL DRAG-TO-SCRUB (TIME TRAVEL)
+    // =========================================================================
+    let isDraggingWheel = false;
+    let wheelDragMoved = false;
+    let lastDragAngle = 0;
+
+    function getPointerAngleDeg(clientX, clientY) {
+      const svg = document.getElementById('timezoneWheel');
+      const rect = svg.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const rad = Math.atan2(clientY - centerY, clientX - centerX);
+      return ((rad * 180) / Math.PI + 90 + 360) % 360;
+    }
+
+    function initWheelScrubber() {
+      const svg = document.getElementById('timezoneWheel');
+
+      const onDown = (clientX, clientY) => {
+        isDraggingWheel = true;
+        wheelDragMoved = false;
+        lastDragAngle = getPointerAngleDeg(clientX, clientY);
+      };
+
+      const onMove = (clientX, clientY) => {
+        if (!isDraggingWheel) return;
+        const currentAngle = getPointerAngleDeg(clientX, clientY);
+        let delta = currentAngle - lastDragAngle;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+
+        if (Math.abs(delta) > 1.2) {
+          wheelDragMoved = true;
+          // 15 degrees = 60 minutes -> 1 degree = 4 minutes
+          state.scrubOffsetMinutes = Math.round(state.scrubOffsetMinutes + delta * 4);
+          lastDragAngle = currentAngle;
+          updateScrubberBanner();
+          renderWheel();
+          renderFriendCards();
+        }
+      };
+
+      const onUp = () => {
+        if (isDraggingWheel) {
+          isDraggingWheel = false;
+          setTimeout(() => { wheelDragMoved = false; }, 50);
+        }
+      };
+
+      svg.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY));
+      window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onUp);
+
+      svg.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          onDown(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (isDraggingWheel && e.touches.length === 1) {
+          onMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', onUp);
+    }
+
+    function updateScrubberBanner() {
+      const pulse = document.getElementById('livePulse');
+      const modeText = document.getElementById('timeModeText');
+      const badge = document.getElementById('offsetBadge');
+      const resetBtn = document.getElementById('resetNowBtn');
+
+      if (state.scrubOffsetMinutes === 0) {
+        pulse.className = 'inline-block w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#3D314A]';
+        modeText.textContent = 'Live Sync • Drag the wheel to time-travel!';
+        badge.classList.add('hidden');
+        resetBtn.classList.add('hidden');
+      } else {
+        pulse.className = 'inline-block w-3 h-3 rounded-full bg-amber-400 border-2 border-[#3D314A]';
+        modeText.textContent = 'Time-Travel Preview';
+        const sign = state.scrubOffsetMinutes > 0 ? '+' : '-';
+        const absMins = Math.abs(state.scrubOffsetMinutes);
+        const h = Math.floor(absMins / 60);
+        const m = absMins % 60;
+        badge.textContent = `${sign}${h}h ${m}m`;
+        badge.classList.remove('hidden');
+        resetBtn.classList.remove('hidden');
+      }
+    }
+
+    // =========================================================================
+    // HTML5 CANVAS HSL COLOR WHEEL (FOR TAP-ON-STRIP CUSTOMIZATION)
+    // =========================================================================
+    let pickerHue = 350;
+    let pickerSat = 85;
+    let pickerLight = 84;
+
+    function hslToHex(h, s, l) {
+      s /= 100;
+      l /= 100;
+      const k = (n) => (n + h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, '0');
+      return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`.toUpperCase();
+    }
+
+    function hexToHsl(hex) {
+      let clean = hex.replace('#', '');
+      if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+      const r = parseInt(clean.substring(0, 2), 16) / 255;
+      const g = parseInt(clean.substring(2, 4), 16) / 255;
+      const b = parseInt(clean.substring(4, 6), 16) / 255;
+
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+      }
+      return {
+        h: Math.round(h),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+      };
+    }
+
+    function drawColorWheelCanvas() {
+      const canvas = document.getElementById('colorWheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+      const radius = size / 2;
+      const imgData = ctx.createImageData(size, size);
+      const data = imgData.data;
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const dx = x - radius;
+          const dy = y - radius;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const idx = (y * size + x) * 4;
+
+          if (dist <= radius) {
+            const angle = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+            const sat = Math.min(100, (dist / radius) * 100);
+            const hex = hslToHex(angle, sat, pickerLight);
+            data[idx] = parseInt(hex.slice(1, 3), 16);
+            data[idx + 1] = parseInt(hex.slice(3, 5), 16);
+            data[idx + 2] = parseInt(hex.slice(5, 7), 16);
+            data[idx + 3] = 255;
+          } else {
+            data[idx + 3] = 0;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      updateColorWheelCursor();
+    }
+
+     function updateColorWheelCursor() {
+      const canvas = document.getElementById('colorWheelCanvas');
+      const cursor = document.getElementById('colorWheelCursor');
+      const radius = canvas.width / 2;
+      const rDist = (pickerSat / 100) * (radius - 6);
+      const rad = (pickerHue * Math.PI) / 180;
+      const cx = radius + rDist * Math.cos(rad);
+      const cy = radius + rDist * Math.sin(rad);
+
+      const hex = hslToHex(pickerHue, pickerSat, pickerLight);
+      cursor.style.left = `${cx}px`;
+      cursor.style.top = `${cy}px`;
+      cursor.style.backgroundColor = hex;
+
+      const badge = document.getElementById('selectedColorHex');
+      badge.textContent = hex;
+      badge.style.backgroundColor = hex;
+
+      // Live preview on the friend's strip while editing!
+      if (state.editingFriendId) {
+        const friend = state.friends.find(f => f.id === state.editingFriendId);
+        if (friend) {
+          friend.color = hex;
+          renderWheel();
+        }
+      }
+    }
+
+     function initColorWheelInteraction() {
+      const canvas = document.getElementById('colorWheelCanvas');
+      let picking = false;
+
+      const pickAt = (clientX, clientY) => {
+        const rect = canvas.getBoundingClientRect();
+        const radius = rect.width / 2;
+        const dx = clientX - (rect.left + radius);
+        const dy = clientY - (rect.top + radius);
+        const dist = Math.min(radius, Math.sqrt(dx * dx + dy * dy));
+
+        pickerHue = Math.round(((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360);
+        pickerSat = Math.round((dist / radius) * 100);
+        updateColorWheelCursor();
+      };
+
+      canvas.addEventListener('mousedown', (e) => {
+        picking = true;
+        pickAt(e.clientX, e.clientY);
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (picking) pickAt(e.clientX, e.clientY);
+      });
+      window.addEventListener('mouseup', () => { picking = false; });
+
+       canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          picking = true;
+          pickAt(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+      canvas.addEventListener('touchmove', (e) => {
+        if (picking && e.touches.length === 1) {
+          pickAt(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { picking = false; });
+
+      // Lightness slider
+      const slider = document.getElementById('lightnessSlider');
+      slider.addEventListener('input', () => {
+        pickerLight = Number(slider.value);
+        document.getElementById('lightnessVal').textContent = `${pickerLight}%`;
+        drawColorWheelCanvas();
+      });
+    }
+
+    // =========================================================================
+    // MODALS & FORM POPULATION
+    // =========================================================================
+    function populateTimeAndUtcSelects() {
+      const utcSelects = [
+        document.getElementById('editUtcSelect'),
+        document.getElementById('newFriendUtc')
+      ];
+      utcSelects.forEach((sel) => {
+        sel.innerHTML = '';
+        UTC_OFFSETS.forEach((item) => {
+          const opt = document.createElement('option');
+          opt.value = item.value;
+          opt.textContent = item.label;
+          sel.appendChild(opt);
+        });
+      });
+
+      const hourSelects = [
+        document.getElementById('editSleepStart'),
+        document.getElementById('editWakeTime'),
+        document.getElementById('newFriendSleepStart'),
+        document.getElementById('newFriendWakeTime')
+      ];
+
+      hourSelects.forEach((sel) => {
+        const prevVal = sel.value;
+        sel.innerHTML = '';
+        for (let h = 0; h < 24; h += 0.5) {
+          const opt = document.createElement('option');
+          opt.value = h;
+          opt.textContent = formatDecimalHour(h, state.is24Hour);
+          sel.appendChild(opt);
+        }
+        if (prevVal !== '') sel.value = prevVal;
+      });
+    }
+
+    function openEditFriendModal(friendId) {
+      const friend = state.friends.find(f => f.id === friendId);
+      if (!friend) return;
+
+      state.editingFriendId = friendId;
+      populateTimeAndUtcSelects();
+
+      document.getElementById('emojiCycleBtn').textContent = friend.emoji;
+      document.getElementById('editNameInput').value = friend.name;
+      document.getElementById('editUtcSelect').value = String(friend.utcOffset);
+      document.getElementById('editSleepStart').value = String(friend.sleepStart);
+      document.getElementById('editWakeTime').value = String(friend.wakeTime);
+
+      // Sync color wheel with friend's current color
+      const hsl = hexToHsl(friend.color);
+      pickerHue = hsl.h;
+      pickerSat = hsl.s;
+      pickerLight = Math.min(92, Math.max(55, hsl.l));
+      document.getElementById('lightnessSlider').value = pickerLight;
+      document.getElementById('lightnessVal').textContent = `${pickerLight}%`;
+      drawColorWheelCanvas();
+
+    // Build quick emoji row
+      const emojiRow = document.getElementById('emojiQuickRow');
+      emojiRow.innerHTML = '';
+      CUTE_EMOJIS.forEach((em) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = em;
+        b.className = 'text-lg w-8 h-8 rounded-xl hover:scale-115 transition-transform cursor-pointer flex items-center justify-center';
+        b.addEventListener('click', () => {
+          document.getElementById('emojiCycleBtn').textContent = em;
+        });
+        emojiRow.appendChild(b);
+      });
+
+      // Build pastel preset swatches
+      const swatches = document.getElementById('pastelSwatches');
+      swatches.innerHTML = '';
+      PASTEL_PALETTE.forEach((hex) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-7 h-7 rounded-full border-2 border-[#3D314A] cursor-pointer hover:scale-110 transition-transform';
+        btn.style.backgroundColor = hex;
+        btn.addEventListener('click', () => {
+          const parsed = hexToHsl(hex);
+          pickerHue = parsed.h;
+          pickerSat = parsed.s;
+          pickerLight = Math.min(92, Math.max(55, parsed.l));
+          document.getElementById('lightnessSlider').value = pickerLight;
+          document.getElementById('lightnessVal').textContent = `${pickerLight}%`;
+          drawColorWheelCanvas();
+        });
+        swatches.appendChild(btn);
+      });
+
+      // Hide delete button if only 1 ring remains
+      const delBtn = document.getElementById('deleteFriendBtn');
+      delBtn.style.display = state.friends.length > 1 ? 'inline-flex' : 'none';
+
+      const modal = document.getElementById('editFriendModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEditFriendModal() {
+      state.editingFriendId = null;
+      const modal = document.getElementById('editFriendModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      loadState(); // Revert unsaved live preview if closed without saving
+      renderAll();
+    }
+
+    function openSettingsModal() {
+      populateTimeAndUtcSelects();
+      document.getElementById('newFriendUtc').value = '0';
+      document.getElementById('newFriendSleepStart').value = '23';
+      document.getElementById('newFriendWakeTime').value = '7';
+
+      // Populate pastel swatches for new friend
+      const row = document.getElementById('newFriendColorRow');
+      row.innerHTML = '';
+      PASTEL_PALETTE.slice(0, 6).forEach((hex) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-7 h-7 rounded-full border-[2.5px] border-[#3D314A] cursor-pointer transition-transform';
+        btn.style.backgroundColor = hex;
+        if (hex === state.newFriendColor) btn.style.transform = 'scale(1.22)';
+        btn.addEventListener('click', () => {
+          state.newFriendColor = hex;
+          Array.from(row.children).forEach(c => c.style.transform = 'scale(1)');
+          btn.style.transform = 'scale(1.22)';
+        });
+        row.appendChild(btn);
+      });
+
+      renderSettingsFriendList();
+
+      const modal = document.getElementById('settingsModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+     function renderSettingsFriendList() {
+      const list = document.getElementById('settingsFriendList');
+      list.innerHTML = '';
+
+      state.friends.forEach((friend, idx) => {
+        const item = document.createElement('div');
+        item.className = 'toon-subcard px-3 py-2 flex items-center justify-between gap-2';
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-xl flex items-center justify-center text-base border-2 border-[#3D314A] shrink-0"
+                  style="background:${friend.color};">${friend.emoji}</span>
+            <div class="min-w-0">
+              <div class="font-display font-bold text-sm truncate">${escapeHtml(friend.name)}</div>
+              <div class="text-[11px] font-bold opacity-75">
+                ${formatUtcBadge(friend.utcOffset)} • 💤 ${formatDecimalHour(friend.sleepStart, state.is24Hour)}–${formatDecimalHour(friend.wakeTime, state.is24Hour)}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" data-action="up" class="toon-btn w-7 h-7 text-xs flex items-center justify-center ${idx === 0 ? 'opacity-35 pointer-events-none' : ''}"
+                    style="background: var(--card-bg);" title="Move outer">↑</button>
+            <button type="button" data-action="down" class="toon-btn w-7 h-7 text-xs flex items-center justify-center ${idx === state.friends.length - 1 ? 'opacity-35 pointer-events-none' : ''}"
+                    style="background: var(--card-bg);" title="Move inner">↓</button>
+            <button type="button" data-action="edit" class="toon-btn px-2.5 h-7 text-xs"
+                    style="background: var(--accent-butter); color: #3D314A;">Edit</button>
+          </div>
+        `;
+
+        item.querySelector('[data-action="up"]').addEventListener('click', () => {
+          if (idx > 0) {
+            [state.friends[idx - 1], state.friends[idx]] = [state.friends[idx], state.friends[idx - 1]];
+            saveState();
+            renderSettingsFriendList();
+            renderAll();
+          }
+        });
+
+        item.querySelector('[data-action="down"]').addEventListener('click', () => {
+          if (idx < state.friends.length - 1) {
+            [state.friends[idx + 1], state.friends[idx]] = [state.friends[idx], state.friends[idx + 1]];
+            saveState();
+            renderSettingsFriendList();
+            renderAll();
+          }
+        });
+
+         item.querySelector('[data-action="edit"]').addEventListener('click', () => {
+          closeSettingsModal();
+          openEditFriendModal(friend.id);
+        });
+
+        list.appendChild(item);
+      });
+    }
+
+    // =========================================================================
+    // THEME, FORMAT & TOAST HELPERS
+    // =========================================================================
+    function applyThemeAndFormatUI() {
+      document.documentElement.setAttribute('data-theme', state.theme);
+      document.getElementById('themeIcon').textContent = state.theme === 'light' ? '☀️' : '🌙';
+      document.getElementById('themeLabel').textContent = state.theme === 'light' ? 'Day' : 'Night';
+      document.getElementById('formatLabel').textContent = state.is24Hour ? '24H' : '12H';
+
+      const starfield = document.getElementById('starfield');
+      if (state.theme === 'dark') {
+        starfield.classList.remove('hidden');
+      } else {
+        starfield.classList.add('hidden');
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(text, icon = '✨') {
+      const pill = document.getElementById('toastPill');
+      document.getElementById('toastText').textContent = text;
+      document.getElementById('toastIcon').textContent = icon;
+      pill.classList.remove('opacity-0', 'translate-y-3');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        pill.classList.add('opacity-0', 'translate-y-3');
+      }, 2200);
+    }
+
+    function renderAll() {
+      applyThemeAndFormatUI();
+      updateScrubberBanner();
+      renderWheel();
+      renderFriendCards();
+    }
+
+    // =========================================================================
+    // EVENT BINDINGS & LIVE CLOCK LOOP
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      populateTimeAndUtcSelects();
+      initWheelScrubber();
+      initColorWheelInteraction();
+      renderAll();
+
+      // 12H / 24H Toggle
+      document.getElementById('toggleFormatBtn').addEventListener('click', () => {
+        state.is24Hour = !state.is24Hour;
+        saveState();
+        renderAll();
+        showToast(`Switched to ${state.is24Hour ? '24-hour' : '12-hour'} clock`, '🕒');
+      });
+
+      // Light / Dark Theme Toggle
+      document.getElementById('toggleThemeBtn').addEventListener('click', () => {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        saveState();
+        renderAll();
+        showToast(state.theme === 'dark' ? 'Cozy Starlight Mode' : 'Pastel Daylight Mode', state.theme === 'dark' ? '🌙' : '☀️');
+      });
+
+      // Reset Time-Travel Scrubber to Now
+      document.getElementById('resetNowBtn').addEventListener('click', () => {
+        state.scrubOffsetMinutes = 0;
+        renderAll();
+        showToast('Back to live time!', '💖');
+      });
+
+      // Open Settings / Add Friend
+      document.getElementById('openSettingsBtn').addEventListener('click', openSettingsModal);
+      document.getElementById('quickAddFriendBtn').addEventListener('click', openSettingsModal);
+      document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
+      document.getElementById('doneSettingsBtn').addEventListener('click', closeSettingsModal);
+
+      // Edit Modal Controls
+      document.getElementById('closeEditModalBtn').addEventListener('click', closeEditFriendModal);
+
+      document.getElementById('emojiCycleBtn').addEventListener('click', () => {
+        const btn = document.getElementById('emojiCycleBtn');
+        const nextIdx = (CUTE_EMOJIS.indexOf(btn.textContent) + 1) % CUTE_EMOJIS.length;
+        btn.textContent = CUTE_EMOJIS[nextIdx];
+      });
+
+      document.getElementById('saveFriendBtn').addEventListener('click', () => {
+        const friend = state.friends.find(f => f.id === state.editingFriendId);
+        if (!friend) return;
+
+        const cleanName = document.getElementById('editNameInput').value.trim();
+        if (!cleanName) {
+          showToast('Please enter a name!', '📝');
+          return;
+        }
+
+         friend.name = cleanName;
+        friend.emoji = document.getElementById('emojiCycleBtn').textContent;
+        friend.color = hslToHex(pickerHue, pickerSat, pickerLight);
+        friend.utcOffset = parseFloat(document.getElementById('editUtcSelect').value);
+        friend.sleepStart = parseFloat(document.getElementById('editSleepStart').value);
+        friend.wakeTime = parseFloat(document.getElementById('editWakeTime').value);
+
+        saveState();
+        state.editingFriendId = null;
+        const modal = document.getElementById('editFriendModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        renderAll();
+        showToast(`Updated ${friend.name}'s ring!`, '🎨');
+      });
+
+      document.getElementById('deleteFriendBtn').addEventListener('click', () => {
+        if (state.friends.length <= 1) return;
+        const target = state.friends.find(f => f.id === state.editingFriendId);
+        state.friends = state.friends.filter(f => f.id !== state.editingFriendId);
+        saveState();
+        state.editingFriendId = null;
+        const modal = document.getElementById('editFriendModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        renderAll();
+        if (target) showToast(`Removed ${target.name}`, '👋');
+      });
+
+      // Add New Friend Form Submission
+      document.getElementById('addFriendForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (state.friends.length >= 6) {
+          showToast('Max 6 rings on the wheel!', '🪐');
+          return;
+        }
+
+        const nameInput = document.getElementById('newFriendName');
+        const name = nameInput.value.trim();
+        if (!name) return;
+
+        const newFriend = {
+          id: `friend-${Date.now()}`,
+          name,
+          emoji: document.getElementById('newFriendEmoji').value,
+          utcOffset: parseFloat(document.getElementById('newFriendUtc').value),
+          color: state.newFriendColor,
+          sleepStart: parseFloat(document.getElementById('newFriendSleepStart').value),
+          wakeTime: parseFloat(document.getElementById('newFriendWakeTime').value)
+        };
+
+        state.friends.push(newFriend);
+        // Cycle next default pastel color
+        const nextColorIdx = (PASTEL_PALETTE.indexOf(state.newFriendColor) + 1) % PASTEL_PALETTE.length;
+        state.newFriendColor = PASTEL_PALETTE[nextColorIdx];
+
+         nameInput.value = '';
+        saveState();
+        renderSettingsFriendList();
+        renderAll();
+        showToast(`Added ${newFriend.name} to the wheel!`, '🫰');
+      });
+
+      // Reset Demo Squad
+      document.getElementById('resetDemoBtn').addEventListener('click', () => {
+        state.friends = createDefaultFriends();
+        saveState();
+        renderSettingsFriendList();
+        renderAll();
+        showToast('Restored sample squad!', '🪐');
+      });
+
+      // Close modals when clicking backdrop
+      document.getElementById('editFriendModal').addEventListener('click', (e) => {
+        if (e.target.id === 'editFriendModal') closeEditFriendModal();
+      });
+      document.getElementById('settingsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') closeSettingsModal();
+      });
+
+      // Real-time ticking update every 15 seconds (and immediately on minute boundary)
+      setInterval(() => {
+        if (state.scrubOffsetMinutes === 0 && !state.editingFriendId) {
+          renderWheel();
+          renderFriendCards();
+        }
+      }, 10000);
+    });
+  </script>
+</body>
+</html>
